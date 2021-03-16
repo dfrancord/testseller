@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import pe.external.sellercenter.domain.entity.DeliveryEntity;
+import pe.external.sellercenter.domain.entity.DeliveryStateEntity;
 import pe.external.sellercenter.domain.model.DeliveryDTO;
 import pe.external.sellercenter.domain.model.DeliveryStatusDTO;
 import pe.external.sellercenter.domain.repository.IDeliveryRepository;
@@ -13,6 +14,7 @@ import pe.external.sellercenter.domain.service.IDeliveryService;
 import pe.external.sellercenter.services.adapters.DeliveryAdapter;
 import pe.external.sellercenter.services.adapters.DeliveryEvidenceAdapter;
 import pe.external.sellercenter.services.adapters.DeliveryStateAdapter;
+import org.springframework.data.domain.ExampleMatcher;
 
 import java.util.stream.Collectors;
 
@@ -35,7 +37,14 @@ public class DeliveryService implements IDeliveryService {
         deliveryEntity.setOrderId(data.getOrderNumber());
         deliveryEntity.setSellerName(data.getSellerName());
 
-        Example<DeliveryEntity> deliveryEntityExample = Example.of(deliveryEntity);
+        Example<DeliveryEntity> deliveryEntityExample = Example.of(deliveryEntity, ExampleMatcher.matchingAll()
+        .withIgnoreNullValues()
+        .withIgnorePaths("DeliveryId")
+        .withIgnorePaths("Accountid")
+        .withIgnorePaths("SellerId")
+        .withIgnorePaths("TrackingUrl")
+        .withIgnorePaths("DownloadDate")
+        .withStringMatcher(ExampleMatcher.StringMatcher.EXACT));
         
       final  var deliveryFind= DeliveryRepository.findOne(deliveryEntityExample);
       
@@ -54,23 +63,45 @@ public class DeliveryService implements IDeliveryService {
 
     @Override
     public DeliveryStatusDTO createOrUpdateStatus(DeliveryStatusDTO data) {
+        DeliveryStateEntity deliveryStateEntity = new DeliveryStateEntity();
+        deliveryStateEntity.setAccountName(data.getAccount());
+        deliveryStateEntity.setGuideNumber(data.getGuidenumber());
+        deliveryStateEntity.setOrderId(data.getOrdernumber());
+        deliveryStateEntity.setSellerName(data.getSellername());
+        deliveryStateEntity.setState(data.getStatus());
+
+        Example<DeliveryStateEntity> deliveryEntityExample = Example.of(deliveryStateEntity, ExampleMatcher.matchingAll()
+        .withIgnoreNullValues()
+        .withIgnorePaths("DeliveryStateId")
+        .withIgnorePaths("AccountId")
+        .withIgnorePaths("TrackingUrl")
+        .withIgnorePaths("Description")
+        .withIgnorePaths("DownloadDate")
+        .withIgnorePaths("Evidence")
+        .withStringMatcher(ExampleMatcher.StringMatcher.EXACT));
         
-        final var delivery=DeliveryStateAdapter.fromDTO(data);
+      final  var deliveryFind= DeliveryStatusRepository.findOne(deliveryEntityExample);
+      
+      var deliveryState = deliveryFind.orElse(null);
 
-        DeliveryStatusRepository.save(delivery);
+      if (deliveryFind.isEmpty()) {
+        deliveryState=DeliveryStateAdapter.fromDTO(data);
+         DeliveryStatusRepository.save(deliveryState);
+      }
 
-       
 
+
+        final var deliveryStateRef=deliveryState;
         final var evidences = data.getEvidences()
         .stream()
-        .map(i -> DeliveryEvidenceAdapter.fromDTO(i, delivery))
+        .map(i -> DeliveryEvidenceAdapter.fromDTO(i, deliveryStateRef))
         .collect(Collectors.toList());
 
-        delivery.getEvidence().addAll(evidences);
+        deliveryState.getEvidence().addAll(evidences);
 
-        DeliveryStatusRepository.save(delivery);
+        DeliveryStatusRepository.save(deliveryState);
 
-        return DeliveryStateAdapter.fromEntity(delivery);
+        return DeliveryStateAdapter.fromEntity(deliveryState);
     }
     
 
