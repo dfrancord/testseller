@@ -35,8 +35,8 @@ public class SwaggerConfiguration implements WebMvcConfigurer {
 
     public ApiInfo getApiInfo() {
         return new ApiInfoBuilder()
-        .title("API SellerNote Incidences")
-        .description("Api for the seller note hook")
+        .title("API Seller Delivery")
+        .description("Api for the seller delivery")
         .version("1.0")
         .build();
     }
