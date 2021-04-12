@@ -1,13 +1,18 @@
 package pe.external.sellercenter.services;
+import com.kenai.jffi.Array;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import pe.external.sellercenter.domain.entity.DeliveryEntity;
+import pe.external.sellercenter.domain.entity.DeliveryOrderEntity;
 import pe.external.sellercenter.domain.entity.DeliveryStateEntity;
+import pe.external.sellercenter.domain.model.DeliberyOrderDTO;
 import pe.external.sellercenter.domain.model.DeliveryDTO;
 import pe.external.sellercenter.domain.model.DeliveryStatusDTO;
+import pe.external.sellercenter.domain.repository.IDeliveryOrderRepository;
 import pe.external.sellercenter.domain.repository.IDeliveryRepository;
 import pe.external.sellercenter.domain.repository.IDeliveryStatusRepository;
 import pe.external.sellercenter.domain.service.IDeliveryService;
@@ -15,8 +20,9 @@ import pe.external.sellercenter.services.adapters.DeliveryAdapter;
 import pe.external.sellercenter.services.adapters.DeliveryEvidenceAdapter;
 import pe.external.sellercenter.services.adapters.DeliveryStateAdapter;
 import org.springframework.data.domain.ExampleMatcher;
-
+import java.util.ArrayList;
 import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
 public class DeliveryService implements IDeliveryService {
@@ -26,6 +32,64 @@ public class DeliveryService implements IDeliveryService {
     @Autowired DeliveryStateAdapter DeliveryStateAdapter;
     @Autowired IDeliveryStatusRepository DeliveryStatusRepository;
     @Autowired IDeliveryRepository DeliveryRepository;
+    @Autowired IDeliveryOrderRepository DeliveryOrderRepository;
+
+    @Override
+    public List<DeliberyOrderDTO> GetOrderSeller(String Seller)
+    {
+
+        DeliveryOrderEntity deliveryOrderEntity=new DeliveryOrderEntity();
+        deliveryOrderEntity.setSellerName(Seller);
+        Example<DeliveryOrderEntity> deliveryEntityExample = Example.of(deliveryOrderEntity, ExampleMatcher.matchingAll()
+                .withIgnoreNullValues()
+                .withIgnorePaths("Id")
+                .withIgnorePaths("Orderid")
+                .withIgnorePaths("json")
+                .withStringMatcher(ExampleMatcher.StringMatcher.EXACT));
+       
+
+        final  var deliveryFind= DeliveryOrderRepository.findAll(deliveryEntityExample);
+        List<DeliveryOrderEntity> deliveryOrders = deliveryFind;
+        List<DeliberyOrderDTO> deliberyOrderDTOList=new ArrayList<DeliberyOrderDTO>();
+
+        if(deliveryOrders == null){
+            return deliberyOrderDTOList;
+        }
+
+
+        for (DeliveryOrderEntity deliveryOrder: deliveryOrders) {
+            deliberyOrderDTOList.add(deliveryOrder.getJson());
+        }
+
+        return deliberyOrderDTOList;
+    }
+
+    @java.lang.Override
+    public List<DeliberyOrderDTO> GetOrderSeller(String Seller, String Orderid) {
+        DeliveryOrderEntity deliveryOrderEntity=new DeliveryOrderEntity();
+        deliveryOrderEntity.setSellerName(Seller);
+        deliveryOrderEntity.setOrderid(Orderid);
+        Example<DeliveryOrderEntity> deliveryEntityExample = Example.of(deliveryOrderEntity, ExampleMatcher.matchingAll()
+                .withIgnoreNullValues()
+                .withIgnorePaths("Id")
+                .withIgnorePaths("Orderid")
+                .withIgnorePaths("json")
+                .withStringMatcher(ExampleMatcher.StringMatcher.EXACT));
+    
+
+        final  var deliveryFind= DeliveryOrderRepository.findAll(deliveryEntityExample);
+        List<DeliveryOrderEntity> deliveryOrders = deliveryFind;
+
+        List<DeliberyOrderDTO> deliberyOrderDTOList=new ArrayList<DeliberyOrderDTO>();
+        if(deliveryOrders == null){
+            return deliberyOrderDTOList;
+        }
+        for (DeliveryOrderEntity deliveryOrder: deliveryOrders) {
+            deliberyOrderDTOList.add(deliveryOrder.getJson());
+        }
+
+        return deliberyOrderDTOList;
+    }
 
     @Override
     @Transactional
@@ -103,6 +167,9 @@ public class DeliveryService implements IDeliveryService {
 
         return DeliveryStateAdapter.fromEntity(deliveryState);
     }
+
+
+
     
 
 }
